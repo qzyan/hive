@@ -22,6 +22,8 @@ exports.getArticle = validate([
 
 exports.updateArticle = [
   // 1. validate if params.slug is a valid ojectid in mongoose
+  // validate takes an array as parameter,
+  // if the first validation middleware does not pass, the second middleware will not be called
   validate([
     validate.isValidObjectId(['params'], 'slug')
   ]),
