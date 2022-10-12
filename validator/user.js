@@ -27,8 +27,9 @@ exports.register = validate([
     })
 ])
 
-//只有非空验证通过，才会往后走，操作db，看email是否存在，password是否匹配，
 // validation for register route
+// only when email format is correct and password not empty
+// will go to the next validtion middleware
 exports.login = [
   // validate if email is in right format and if password is empty
   validate([
@@ -38,13 +39,12 @@ exports.login = [
 
     body('user.password').notEmpty().withMessage('Password can not be Empty'),
   ]),
-  //验证邮箱已经注册，密码匹配
-  // validate if email has been registered and if password matched
+  // validate if email has been registered
   validate([
     body('user.email')
       .custom(async (email, { req }) => {
-        // db中设置了查询默认不带pw
-        // 强制要求查询时需要password
+        // db settting deault query without pw
+        // require that this query need password
         const user = await User.findOne({ email }).select(['password', 'email', 'username', 'bio', 'image']);
         if (!user) {
           return Promise.reject('The email address is not registered yet')
@@ -53,6 +53,7 @@ exports.login = [
         req.user = user;
       })
   ]),
+  // and if password matches
   validate([
     body('user.password')
       .custom(async (pw, { req }) => {
