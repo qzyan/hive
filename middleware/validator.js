@@ -18,7 +18,7 @@ const validate = (validations) => {
   };
 };
 
-// 封装验证传递的id是否为mongoose中有效的objectid类型
+// validate if the field in locations is a valid objectid object in mongoose
 validate.isValidObjectId = (locations, field) => {
   return buildCheckFunction(locations)(field).custom(async value => {
     if (!isValidObjectId(value)) {
