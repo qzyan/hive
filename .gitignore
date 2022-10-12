@@ -1,0 +1,12 @@
+.env
+.env-development
+.env-production
+
+node_modules/
+00_DEMO/
+
+.DS_Store
+.sass-cache
+.tmp
+.rvmrc
+.trashes
