@@ -5,16 +5,16 @@ router.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-//用户相关路由
+//user related routes
 router.use(require('./user.js'))
 
-//profile相关路由
+//profile relted routes
 router.use('/profiles', require('./profile.js'))
 
-//文章相关路由
+//article related routes
 router.use('/articles', require('./article.js'))
 
-//tag相关路由
+//tag related routes
 router.use('/tags', require('./tag.js'))
 
 

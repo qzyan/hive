@@ -10,17 +10,17 @@ require('./model')
 const app = express()
 const port = process.env.PORT || 3000
 
-//配置中间件
+//mount middlewares
 app.use(express.json());
-//日志输出
+//log
 app.use(morgan('dev'));
-//跨域响应
+//cors
 app.use(cors())
 
-//挂载路由
+//routes
 app.use('/api', router)
 
-//挂载错误处理中间件
+//error handling middleware
 app.use(errorHandler())
 
 app.listen(port, () => {

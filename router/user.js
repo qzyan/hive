@@ -11,7 +11,7 @@ const router = express.Router()
 router.post('/users/login', userValidator.login, userCtrl.login)
 
 //Registration
-//用中间件-验证模块来验证输入数据有效性
+//use self defined middlewre - validator module to validate the input
 router.post('/users', userValidator.register, userCtrl.register)  //通过验证，执行具体的控制处理器
 
 //Get Current User

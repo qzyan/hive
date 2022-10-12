@@ -3,11 +3,11 @@ const { body } = require('express-validator');
 const { User } = require('../model')
 const md5 = require('../util/md5.js')
 
-// 提取单独的验证模块
-exports.register = validate([ //配置验证规则
+// validation for register route
+exports.register = validate([
   body('user.username')
     .notEmpty().withMessage('Username can not be Empty')
-    .custom(async username => {  // 验证用户名唯一
+    .custom(async username => {  // validate if username is unique
       const user = await User.findOne({ username })
 
       if (user) {
@@ -18,8 +18,8 @@ exports.register = validate([ //配置验证规则
   body('user.email')
     .notEmpty().withMessage('Email can not be Empty')
     .isEmail().withMessage('Invalid Email format')
-    .bail()  //前面验证失败，不再进行后面的验证
-    .custom(async email => {  // 验证email唯一
+    .bail()  //if previous validation failed, latter validation will not perform
+    .custom(async email => {  // validate if email is unique
       const user = await User.findOne({ email });
       if (user) {
         return Promise.reject('The email address has already been registered')
@@ -28,9 +28,9 @@ exports.register = validate([ //配置验证规则
 ])
 
 //只有非空验证通过，才会往后走，操作db，看email是否存在，password是否匹配，
-//所以login是个中间件数组
+// validation for register route
 exports.login = [
-  //验证email格式正确，密码不为空
+  // validate if email is in right format and if password is empty
   validate([
     body('user.email')
       .notEmpty().withMessage('Email can not be Empty')
@@ -39,6 +39,7 @@ exports.login = [
     body('user.password').notEmpty().withMessage('Password can not be Empty'),
   ]),
   //验证邮箱已经注册，密码匹配
+  // validate if email has been registered and if password matched
   validate([
     body('user.email')
       .custom(async (email, { req }) => {
@@ -48,7 +49,7 @@ exports.login = [
         if (!user) {
           return Promise.reject('The email address is not registered yet')
         }
-        //req在整个中间件流程中，共享一个，可以挂载数据,后续中间件也可以使用
+        //mount user to req. req can be used to add data since all middlewares share the same req
         req.user = user;
       })
   ]),
