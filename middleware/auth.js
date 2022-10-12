@@ -18,12 +18,12 @@ module.exports = async (req, res, next) => {
     // parse token
     const parsedToken = await jwt.verify(token, JWTSECRET);
 
-    // verify token, store user info to req for latter middleware
+    // 3.verify token, store user info to req for latter middleware
     const user = await User.findById(parsedToken.userId)
     req.user = user;
     next();
   } catch (err) {
-    // 3.not valid token, response with 401
+    // 4.not valid token, response with 401
     return res.status(401).end()
   }
 }
