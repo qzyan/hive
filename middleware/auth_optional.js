@@ -2,28 +2,29 @@ const jwt = require('../util/jwt.js');
 const { JWTSECRET } = require('../config/config.js');
 const { User } = require('../model')
 
-//进行身份认证,获取当前登陆用户
-//将当前token的用户信息挂载到req上
+
 module.exports = async (req, res, next) => {
   try {
-    // 1.解析请求头，获取tokne信息
+    // 1.parse req headers，get tokne
     const auth = req.headers['authentication'];
     const token = auth ? auth.split(': ')[1] : null;
-    // 2.无效 - 继续
-    if (!token) {
+    // 2.no token, no logged in user, continue to next middleware
+    console.log(token)
+    if (!token || token === 'undefined') {
+      console.log(token)
       next();
       return;
     }
 
-    // 验证
+    // 3. token exists, verify the token
     const parsedToken = await jwt.verify(token, JWTSECRET);
 
-    // 4.有效 - 把用户信息挂载到req上，继续往后执行
+    // valid token - mount the user data to req，continue to next middleware
     const user = await User.findById(parsedToken.userId)
     req.user = user;
     next();
   } catch (err) {
-    // 3.验证token, 失败返回401
-    next()
+    // 4.not valid token, response with 401
+    return res.status(401).end()
   }
 }
