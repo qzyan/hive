@@ -36,7 +36,7 @@ exports.login = async(req, res, next) => {
     // 默认永久有效
     const token = await jwt.sign({
       userId: user._id
-    }, JWTSECRET, { expiresIn: 60*60*24})
+    }, JWTSECRET, { expiresIn: 60*60*24*365})
 
     // 3. 发送成功消息， 返回生成的user和token
     delete user.password

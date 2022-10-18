@@ -1,33 +1,33 @@
-const { Article, User, Comment, Favorite } = require('../model')
+const { Article, User, Comment, Favorite, Follow } = require('../model');
+const { Types } = require('mongoose');
 
 exports.list = async (req, res, next) => {
   try {
-    // 条件限定
     const { offset = 0, limit = 20, tag, author } = req.query
     const filter = {}
-    // tagList包含tag
+    // tagList includes tag
     if (tag) {
       filter.tagList = tag
     }
 
     if (author) {
-      //找到auhor的_id,传给filter做参数
+      //get auhor _id, pass to filter
       const user = await User.findOne({ username: author })
       filter.author = user ? user._id : null;
     }
 
-    //数据筛选
+    //get article and populate necessary fields
     let articles = await Article.find(filter)
       .populate('author', 'username image')
       .populate({ path: 'commentList', select: 'author body createdAt favoritesCount', populate: { path: 'author', select: 'username image' } })
-      // 数据分页
-      .skip(offset) // 跳过多少条
-      .limit(limit) //取多少条
-      .sort({ createdAt: -1 }) // 排序
+      // pagination
+      .skip(offset)
+      .limit(limit)
+      .sort({ createdAt: -1 }) // des
 
     articles = articles.map(article => article.toJSON());
 
-    //所有文章总数
+    //get article count
     const articlesCount = await Article.estimatedDocumentCount();
 
     const { user } = req;
@@ -66,6 +66,7 @@ exports.feed = async (req, res, next) => {
   }
 }
 
+// get a single article by slug
 exports.get = async (req, res, next) => {
   try {
     const { slug } = req.params;
@@ -78,27 +79,54 @@ exports.get = async (req, res, next) => {
 
     article = article.toJSON();
 
-    //没找到
+    //not a valid slug
     if (!article) {
       res.status(404).end()
     }
 
     const { user } = req;
+
     // see if the article is favorited or not
     //not logged in, none is favorted
+    // author is not followed
+    if (!user) {
+      article.favorited = false;
+      article.author.following = false;
+    }
+
     //if logged in, iterate over each article if the article is favorited by the current user
     if (user) {
-      const { _id: user_id } = user;
-      let favedArticlesIds = await Favorite.find({ user_id, active: true }, 'article_id');
-      favedArticlesIds = favedArticlesIds.map(idObj => idObj.article_id.toJSON());
-      favedArticlesIds = new Set(favedArticlesIds);
+      const { _id: user_id, username } = user;
+      const {author:{username: authorName}} = article
+      let isFavorite = await Favorite.findOne({ user_id:Types.ObjectId(user_id), article_id: Types.ObjectId(slug) }, 'active');
 
-      if (favedArticlesIds.has(article._id.toJSON())) {
-        article.favorited = true;
-      } else {
+      // isFavorite is null
+      if (!isFavorite) {
         article.favorited = false;
       }
+      if (isFavorite && isFavorite.active) {
+        article.favorited = true;
+      }
+      if (isFavorite && !isFavorite.active) {
+        article.favorited = false;
+      }
+
+      // see if author is followed by current user
+      let isFollowing = await Follow.findOne({username, following: authorName }, 'active')
+      if (!isFollowing) {
+        article.author.following = false;
+      }
+      if (isFollowing && isFollowing.active) {
+        article.author.following = true;
+      }
+      if (isFollowing && !isFollowing.active) {
+        article.author.following = false;
+      }
+
+
     }
+
+
 
 
     res.status(200).json({ article })
