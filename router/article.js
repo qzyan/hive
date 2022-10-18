@@ -7,7 +7,7 @@ const articleValidator = require('../validator/article.js');
 const router = express.Router()
 
 //List Articles
-router.get('/', authOptional ,articleCtrl.list)
+router.get('/', authOptional, articleCtrl.list)
 
 //Feed Articles
 router.get('/feed', articleCtrl.feed)
@@ -37,6 +37,6 @@ router.delete('/:slug/comments/:id', articleCtrl.deleteComment)
 router.post('/:slug/favorite', auth, articleCtrl.favorite)
 
 //Unfavorite Article
-router.delete('/:slug/favorite', articleCtrl.unfavorite)
+router.delete('/:slug/favorite', auth, articleCtrl.unfavorite)
 
 module.exports = router;
