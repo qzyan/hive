@@ -230,13 +230,9 @@ exports.favorite = async (req, res, next) => {
       return res.status(201).json({ msg: 'favorite succeeded' })
     }
 
-    // currently favorite, to unfavor
+    // currently favorite, unable to favor again
     if (fav.active) {
-      fav.active = false;
-      await fav.save();
-      article.favoritesCount -= 1;
-      article.save()
-      return res.status(201).json({ msg: 'unfavorite succeeded' })
+      return res.status(400).end()
     }
     // currently unfaved, to refavor
     fav.active = true
@@ -251,7 +247,22 @@ exports.favorite = async (req, res, next) => {
 
 exports.unfavorite = async (req, res, next) => {
   try {
-    res.send('unfavorite article')
+    const { user: { _id: user_id } } = req;
+    const { slug: article_id } = req.params;
+
+    const fav = await Favorite.findOne({ article_id, user_id });
+    const article = await Article.findById(article_id);
+
+    // currently favorite, to unfavor
+    if (fav.active) {
+      fav.active = false;
+      await fav.save();
+      article.favoritesCount -= 1;
+      article.save()
+      return res.status(201).json({ msg: 'unfavorite succeeded' })
+    }
+    // currently unfaved or never favorite before, unable to unfavorite
+    return res.status(400).end()
   } catch (err) {
     next(err)
   }
