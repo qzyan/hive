@@ -7,7 +7,7 @@ const { User } = require('../model')
 module.exports = async (req, res, next) => {
   try {
     // 1.parse req headers and get token
-    const auth = req.headers['authentication'];
+    const auth = req.headers.authentication;
     const token = auth ? auth.split(': ')[1] : null;
     // 2.no token response with 401
     if (!token) {
