@@ -29,10 +29,6 @@ const articleSchema = new mongoose.Schema({
     ref: 'Users',
     required: true
   },
-  commentList: {
-    type: [{type: Schema.Types.ObjectId, ref: 'Comments'}],
-    default: []
-  }
 })
 
 const Article = mongoose.model('Articles', articleSchema)

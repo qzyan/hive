@@ -6,7 +6,7 @@ exports.getProfile = async (req, res, next) => {
     const { user: currUser } = req;
 
     // get the user basic info from Users collection
-    let user = await User.findOne({ username }, "email bio image");
+    let user = await User.findOne({ username }, "email bio image username");
     user = user.toJSON()
     delete user._id
     // get the following relation from follows collection

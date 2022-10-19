@@ -19,7 +19,7 @@ exports.list = async (req, res, next) => {
     //get article and populate necessary fields
     let articles = await Article.find(filter)
       .populate('author', 'username image')
-      .populate({ path: 'commentList', select: 'author body createdAt favoritesCount', populate: { path: 'author', select: 'username image' } })
+      // .populate({ path: 'commentList', select: 'author body createdAt favoritesCount', populate: { path: 'author', select: 'username image' } })
       // pagination
       .skip(offset)
       .limit(limit)
@@ -72,10 +72,10 @@ exports.get = async (req, res, next) => {
     const { slug } = req.params;
     let article = await Article.findById(slug)
       .populate('author', '_id, username image')
-      .populate({
-        path: 'commentList', select: 'author body createdAt favoritesCount',
-        populate: { path: 'author', select: 'username image' }
-      })
+      // .populate({
+      //   path: 'commentList', select: 'author body createdAt favoritesCount',
+      //   populate: { path: 'author', select: 'username image bio' }
+      // })
 
     article = article.toJSON();
 
@@ -97,8 +97,8 @@ exports.get = async (req, res, next) => {
     //if logged in, iterate over each article if the article is favorited by the current user
     if (user) {
       const { _id: user_id, username } = user;
-      const {author:{username: authorName}} = article
-      let isFavorite = await Favorite.findOne({ user_id:Types.ObjectId(user_id), article_id: Types.ObjectId(slug) }, 'active');
+      const { author: { username: authorName } } = article
+      let isFavorite = await Favorite.findOne({ user_id: Types.ObjectId(user_id), article_id: Types.ObjectId(slug) }, 'active');
 
       // isFavorite is null
       if (!isFavorite) {
@@ -112,7 +112,7 @@ exports.get = async (req, res, next) => {
       }
 
       // see if author is followed by current user
-      let isFollowing = await Follow.findOne({username, following: authorName }, 'active')
+      let isFollowing = await Follow.findOne({ username, following: authorName }, 'active')
       if (!isFollowing) {
         article.author.following = false;
       }
