@@ -10,7 +10,7 @@ const router = express.Router()
 router.get('/', authOptional, articleCtrl.list)
 
 //Feed Articles
-router.get('/feed', articleCtrl.feed)
+router.get('/feed', auth, articleCtrl.feed)
 
 //Get Article
 router.get('/:slug', authOptional, articleValidator.getArticle, articleCtrl.get)
