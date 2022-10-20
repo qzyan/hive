@@ -3,18 +3,28 @@ const { Types } = require('mongoose');
 
 exports.list = async (req, res, next) => {
   try {
-    const { offset = 0, limit = 10, tag, author } = req.query;
+    const { offset = 0, limit = 10, tag, author, favoritedBy } = req.query;
     const { user } = req;
-    const filter = {}
+    const filter = {};
     // tagList includes tag
     if (tag) {
       filter.tagList = tag
     }
 
     if (author) {
-      const user = await User.findOne({ username: author })
-      //get auhor _id, pass to filter
-      filter.author = user ? user._id : null;
+      const authorResult = await User.findOne({ username: author })
+      //get author _id, pass to filter
+      filter.author = authorResult ? authorResult._id : null;
+    }
+
+    // if favoritedBy is defined, find all the articles favorited by the user and set as filter
+    if (favoritedBy) {
+      const favoritedByUserResult = await User.findOne({ username: favoritedBy });
+      let favoritedarticleResult = await Favorite.aggregate()
+        .match({ user_id: favoritedByUserResult ? favoritedByUserResult._id : null, active: true });
+
+      favoritedarticleResult = favoritedarticleResult.map((ele) => ele.article_id);
+      filter._id = { $in: favoritedarticleResult }
     }
 
     //get article and populate necessary fields
@@ -32,40 +42,16 @@ exports.list = async (req, res, next) => {
       .addFields({ favorited: { $size: '$favorites' } })
       .project({ favorites: 0 })
       // pagination
+      .sort({ createdAt: -1 }) // des
       .skip(parseInt(offset))
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 }) // des
 
     await Article.populate(articles, { path: 'author', select: 'username image' })
-    console.log(articles);
-
-    // articles = articles.map(article => article.toJSON());
 
     //get article count
-    const articlesCount = await Article.estimatedDocumentCount();
+    const articlesCount = author || favoritedBy ? await Article.countDocuments(filter) : await Article.estimatedDocumentCount();
 
-    // see if the article is favorited or not
-    //not logged in, none is favorted
-    //if logged in, iterate over each article if the article is favorited by the current user
-    // if (user) {
-    //   const { _id: user_id } = user;
-    //   let favedArticlesIds = await Favorite.find({ user_id, active: true }, 'article_id');
-    //   favedArticlesIds = favedArticlesIds.map(idObj => idObj.article_id.toJSON());
-    //   favedArticlesIds = new Set(favedArticlesIds)
-
-    //   articles.forEach(article => {
-    //     if (favedArticlesIds.has(article._id.toJSON())) {
-    //       article.favorited = true;
-    //     } else {
-    //       article.favorited = false;
-    //     }
-    //   })
-    // }
-
-    res.status(200).json({
-      articles,
-      articlesCount
-    })
+    res.status(200).json({ articles, articlesCount })
   } catch (err) {
     next(err)
   }
@@ -98,13 +84,13 @@ exports.feed = async (req, res, next) => {
       .addFields({ favorited: { $size: '$favorites' } })
       .project({ favorites: 0 })
       // pagination
+      .sort({ createdAt: -1 }) // des
       .skip(parseInt(offset))
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 }) // des
 
     await Article.populate(articles, { path: 'author', select: 'username image' })
 
-    const articlesCount = await Article.find(filter).count();
+    const articlesCount = await Article.countDocuments(filter);
 
     res.send({ articles, articlesCount })
   } catch (err) {

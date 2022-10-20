@@ -9,9 +9,7 @@ module.exports = async (req, res, next) => {
     const auth = req.headers['authentication'];
     const token = auth ? auth.split(': ')[1] : null;
     // 2.no token, no logged in user, continue to next middleware
-    console.log(token)
     if (!token || token === 'undefined') {
-      console.log(token)
       next();
       return;
     }
