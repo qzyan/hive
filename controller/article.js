@@ -6,11 +6,13 @@ exports.list = async (req, res, next) => {
     const { offset = 0, limit = 10, tag, author, favoritedBy } = req.query;
     const { user } = req;
     const filter = {};
-    // tagList includes tag
+
+    // if tag is defined, tagList includes tag
     if (tag) {
       filter.tagList = tag
     }
 
+    // if author is defiend, add to the filter
     if (author) {
       const authorResult = await User.findOne({ username: author })
       //get author _id, pass to filter
@@ -28,7 +30,7 @@ exports.list = async (req, res, next) => {
     }
 
     //get article and populate necessary fields
-    let articles = await Article.aggregate()
+    const articles = await Article.aggregate()
       .match(filter)
       .lookup({
         from: 'favorites',
@@ -70,7 +72,7 @@ exports.feed = async (req, res, next) => {
     followedUsers = followedUsers.map(user => user._id)
     filter.author = { $in: followedUsers };
 
-    let articles = await Article.aggregate()
+    const articles = await Article.aggregate()
       .match(filter)
       .lookup({
         from: 'favorites',
