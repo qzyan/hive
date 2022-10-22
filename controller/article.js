@@ -185,18 +185,18 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    // 把document转换为普通对象
     const article = req.article
     const { article: toUpdate } = req.body
-    // 内存内的跟新
+    // update in memory
     article.title = toUpdate.title || article.title
     article.description = toUpdate.description || article.description
     article.body = toUpdate.body || article.body
+    article.tagList = toUpdate.tagList || article.tagList
     article.updatedAt = new Date()
 
-    // 数据库内的跟新
+    // update in database
     await article.save()
-    // 返回跟新后的文章
+    // return new article
     res.status(201).json(article)
   } catch (err) {
     next(err)
