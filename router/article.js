@@ -3,6 +3,7 @@ const articleCtrl = require('../controller/article.js')
 const auth = require('../middleware/auth.js');
 const authOptional = require('../middleware/auth_optional.js');
 const articleValidator = require('../validator/article.js');
+const commentValidator = require('../validator/comment.js')
 
 const router = express.Router()
 
@@ -31,7 +32,7 @@ router.post('/:slug/comments', auth, articleCtrl.createComment)
 router.get('/:slug/comments', articleCtrl.getComments)
 
 //Delete Comment
-router.delete('/:slug/comments/:id', articleCtrl.deleteComment)
+router.delete('/:slug/comments/:id', auth, commentValidator.deleteComment, articleCtrl.deleteComment)
 
 //Favorite Article
 router.post('/:slug/favorite', auth, articleCtrl.favorite)
