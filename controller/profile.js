@@ -4,7 +4,6 @@ exports.getProfile = async (req, res, next) => {
   try {
     const { username } = req.params;
     const { user: currUser } = req;
-
     // get the user basic info from Users collection
     let user = await User.findOne({ username }, "email bio image username");
     user = user.toJSON()
@@ -16,7 +15,8 @@ exports.getProfile = async (req, res, next) => {
     }
 
     const following = await Follow.findOne({ username: currUser.username, following: username }, 'active')
-    user.following = following.active
+    console.log(following)
+    user.following = following ? following.active : false;
 
     res.send({ profile: user });
   } catch (err) {
