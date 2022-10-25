@@ -18,6 +18,6 @@ router.post('/users', userValidator.register, userCtrl.register)  //通过验证
 router.get('/user', auth, userCtrl.getCurrUser)
 
 //Update User
-router.put('/user', userCtrl.updateCurrUser)
+router.put('/user', auth, userValidator.update, userCtrl.updateCurrUser)
 
 module.exports = router;

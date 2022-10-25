@@ -1,64 +1,84 @@
-const {User} = require('../model');
+const { User } = require('../model');
 const jwt = require('../util/jwt.js');
 const { JWTSECRET } = require('../config/config.js');
 
-exports.register = async(req, res, next) => {
+exports.register = async (req, res, next) => {
   try {
     //1. parse req body
     const user = req.body.user;
-    //2. 数据验证 - 放在单独的中间件中验证
-    //2.1 基本数据验证
-    //2.2 业务数据验证
+    //2. data validation - prev middleware
+    //2.1 basic data validation
+    //2.2 resigter data validation
 
-    //3. 验证通过，数据储存到数据库
+    //3. pass validation, save data to db
     let newUser = await User.create(user);
     newUser = newUser.toJSON();
-    //mongdb对象删不掉此项,要转换为普通对象
+    //mongdb object unable to delete ,turn to normal object first
     delete newUser.password;
-    // 生成token
+    // generate token
     const token = await jwt.sign({
       userId: newUser._id
-    }, JWTSECRET, { expiresIn: 60*60*24})
-    //4. 发送成功响应
-    res.json({user: {...newUser, token}})
+    }, JWTSECRET, { expiresIn: 60 * 60 * 24 })
+    //4. send success res
+    res.json({ user: { ...newUser, token } })
   } catch (err) {
     next(err)
   }
 }
 
-exports.login = async(req, res, next) => {
+exports.login = async (req, res, next) => {
   try {
-    // 1。 通过验证
-    // 2. 生成token
+    // 1。 pass validation
+    // 2. generate token
 
     const user = req.user.toJSON()
     // token保存用户id足够,其他意义不大
-    // 默认永久有效
+    // by default valid forever, set a exp
     const token = await jwt.sign({
       userId: user._id
-    }, JWTSECRET, { expiresIn: 60*60*24*365})
+    }, JWTSECRET, { expiresIn: 60 * 60 * 24 * 365 })
 
-    // 3. 发送成功消息， 返回生成的user和token
+    // 3. send success res， user data and token
     delete user.password
-    res.status(200).json({user: {...user, token}})
+    res.status(200).json({ user: { ...user, token } })
   } catch (err) {
     next(err)
   }
 }
 
 
-exports.getCurrUser = async(req, res, next) => {
+exports.getCurrUser = async (req, res, next) => {
   try {
     //处理req
-    res.status(200).send({user: req.user.toJSON()});
+    res.status(200).send({ user: req.user.toJSON() });
   } catch (err) {
     next(err)
   }
 }
 
-exports.updateCurrUser = async(req, res, next) => {
+exports.updateCurrUser = async (req, res, next) => {
   try {
-    //处理req
+    const { user } = req;
+    const { user: toUpdate } = req.body;
+    user.username = toUpdate.username || user.username
+    user.email = toUpdate.email || user.email
+    if (toUpdate.password) {
+      user.password = toUpdate.password
+    }
+    user.bio = toUpdate.bio || user.bio
+    user.image = toUpdate.image || user.image
+    user.updatedAt = new Date()
+
+    await user.save();
+
+    const updatedUser = user.toJSON();
+    delete updatedUser.password;
+
+    const token = await jwt.sign({
+      userId: updatedUser._id
+    }, JWTSECRET, { expiresIn: 60 * 60 * 24 * 365 })
+
+    res.status(200).send({ user: { ...updatedUser, token } });
   } catch (err) {
     next(err)
   }

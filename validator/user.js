@@ -36,7 +36,6 @@ exports.login = [
     body('user.email')
       .notEmpty().withMessage('Email can not be Empty')
       .isEmail().withMessage('Invalid Email format'),
-
     body('user.password').notEmpty().withMessage('Password can not be Empty'),
   ]),
   // validate if email has been registered
@@ -63,3 +62,36 @@ exports.login = [
       })
   ])
 ]
+
+exports.update = validate([
+  // validate if the new username and
+  body('user.username')
+    .optional()
+    .custom(async username => {  // validate if username is unique
+      const user = await User.findOne({ username })
+
+      if (user) {
+        return Promise.reject('The username has already been used')
+      }
+    }),
+  // if the new email is good
+  body('user.email')
+    .optional()
+    .isEmail().withMessage('Invalid Email format')
+    .bail()  //if previous validation failed, latter validation will not perform
+    .custom(async email => {  // validate if email is unique
+      const user = await User.findOne({ email });
+      if (user) {
+        return Promise.reject('The email address has already been registered')
+      }
+    }),
+  // if prevPassword matches what stored in db
+  body('user.prevPassword')
+    .custom(async (pw, { req }) => {
+      const { password: pwInDb } = await User.findById(req.user._id).select('password')
+      if (pwInDb !== md5(pw)) {
+        return Promise.reject('Password is not correct')
+      }
+    })
+])
+
