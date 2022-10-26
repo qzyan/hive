@@ -51,7 +51,7 @@ exports.list = async (req, res, next) => {
     await Article.populate(articles, { path: 'author', select: 'username image' })
 
     //get article count
-    const articlesCount = author || favoritedBy ? await Article.countDocuments(filter) : await Article.estimatedDocumentCount();
+    const articlesCount = author || favoritedBy || tag ? await Article.countDocuments(filter) : await Article.estimatedDocumentCount();
 
     res.status(200).json({ articles, articlesCount })
   } catch (err) {
