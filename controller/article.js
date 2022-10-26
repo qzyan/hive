@@ -1,4 +1,4 @@
-const { Article, User, Comment, Favorite, Follow } = require('../model');
+const { Article, User, Comment, Favorite, Follow, Tag } = require('../model');
 const { Types } = require('mongoose');
 
 exports.list = async (req, res, next) => {
@@ -172,11 +172,21 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const article = new Article(req.body.article);
+    article.tagList = [...new Set(article.tagList)];
     article.author = req.user._id;
-    //将article.author的数据映射到author
-    //数据库中保存的仍然是id
+    //article author is populated when send back
+    //in db, author is id
     await article.save()
     await article.populate('author')
+
+    // update tags
+    await Tag.bulkWrite(article.tagList.map(tag => ({
+      updateOne: {
+        filter: { tagName: tag },
+        update: { $inc: { articlesCount: 1 } },
+        upsert: true,
+      }
+    })))
     res.status(201).json({ article })
   } catch (err) {
     next(err)
@@ -187,6 +197,13 @@ exports.update = async (req, res, next) => {
   try {
     const article = req.article
     const { article: toUpdate } = req.body
+
+    toUpdate.tagList = [...new Set(toUpdate.tagList)];
+    const newTags = toUpdate.tagList.filter(tag => !article.tagList.includes(tag));
+    const deletedTags = article.tagList.filter(tag => !toUpdate.tagList.includes(tag));
+    console.log("newTags", newTags)
+    console.log("deletedTags", deletedTags)
+
     // update in memory
     article.title = toUpdate.title || article.title
     article.description = toUpdate.description || article.description
@@ -196,6 +213,23 @@ exports.update = async (req, res, next) => {
 
     // update in database
     await article.save()
+
+    // update tags
+    await Tag.bulkWrite(newTags.map(tag => ({
+      updateOne: {
+        filter: { tagName: tag },
+        update: { $inc: { articlesCount: 1 } },
+        upsert: true,
+      }
+    })))
+
+    await Tag.bulkWrite(deletedTags.map(tag => ({
+      updateOne: {
+        filter: { tagName: tag },
+        update: { $inc: { articlesCount: -1 } },
+      }
+    })))
+
     // return new article
     res.status(201).json(article)
   } catch (err) {

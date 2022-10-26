@@ -7,7 +7,7 @@ const tagSchema = new mongoose.Schema({
   },
   articlesCount: {
     type: Number,
-    default: 0
+    default: 1
   }
 })
 
