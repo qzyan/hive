@@ -241,6 +241,14 @@ exports.delete = async (req, res, next) => {
   try {
     const article = req.article;
     await article.remove();
+
+    await Tag.bulkWrite(article.tagList.map(tag => ({
+      updateOne: {
+        filter: { tagName: tag },
+        update: { $inc: { articlesCount: -1 } },
+      }
+    })))
+
     res.status(204).end();
   } catch (err) {
     next(err)
