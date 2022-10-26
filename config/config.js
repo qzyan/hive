@@ -1,5 +1,5 @@
-const DBURL = 'mongodb://localhost:27017/realworld_1'
-const SALT = 'SSAALLTT'
-const JWTSECRET = 'd064f0c4-2fd8-11ed-a261-0242ac120002'
+const DBURL = process.env.DBURL
+const SALT = process.env.SALT
+const JWTSECRET = process.env.JWTSECRET
 
 module.exports = {DBURL, SALT, JWTSECRET}
